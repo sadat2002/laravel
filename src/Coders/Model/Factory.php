@@ -161,7 +161,7 @@ class Factory
      */
     public function create($schema, $table)
     {
-        $model = $this->makeModel($schema, $table);
+        $model = $this->makeModel($schema, $table,false);
         $template = $this->prepareTemplate($model, 'model');
 
         $file = $this->fillTemplate($template, $model);
