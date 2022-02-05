@@ -80,7 +80,8 @@ class Factory
      */
     protected function models()
     {
-        if (! isset($this->models)) {
+        if (!isset($this->models))
+        {
             $this->models = new ModelManager($this);
         }
 
@@ -94,9 +95,9 @@ class Factory
      *
      * @return $this
      */
-    public function on($connection = null)
+    public function on($connection = null, $schema = null)
     {
-        $this->schemas = new SchemaManager($this->db->connection($connection));
+        $this->schemas = new SchemaManager($this->db->connection($connection), $schema);
 
         return $this;
     }
@@ -106,14 +107,17 @@ class Factory
      */
     public function map($schema)
     {
-        if (! isset($this->schemas)) {
+        if (!isset($this->schemas))
+        {
             $this->on();
         }
 
         $mapper = $this->makeSchema($schema);
 
-        foreach ($mapper->tables() as $blueprint) {
-            if ($this->shouldTakeOnly($blueprint) && $this->shouldNotExclude($blueprint)) {
+        foreach ($mapper->tables() as $blueprint)
+        {
+            if ($this->shouldTakeOnly($blueprint) && $this->shouldNotExclude($blueprint))
+            {
                 $this->create($mapper->schema(), $blueprint->table());
             }
         }
@@ -126,8 +130,10 @@ class Factory
      */
     protected function shouldNotExclude(Blueprint $blueprint)
     {
-        foreach ($this->config($blueprint, 'except', []) as $pattern) {
-            if (Str::is($pattern, $blueprint->table())) {
+        foreach ($this->config($blueprint, 'except', []) as $pattern)
+        {
+            if (Str::is($pattern, $blueprint->table()))
+            {
                 return false;
             }
         }
@@ -142,9 +148,12 @@ class Factory
      */
     protected function shouldTakeOnly(Blueprint $blueprint)
     {
-        if ($patterns = $this->config($blueprint, 'only', [])) {
-            foreach ($patterns as $pattern) {
-                if (Str::is($pattern, $blueprint->table())) {
+        if ($patterns = $this->config($blueprint, 'only', []))
+        {
+            foreach ($patterns as $pattern)
+            {
+                if (Str::is($pattern, $blueprint->table()))
+                {
                     return true;
                 }
             }
@@ -161,18 +170,20 @@ class Factory
      */
     public function create($schema, $table)
     {
-        $model = $this->makeModel($schema, $table,false);
+        $model = $this->makeModel($schema, $table, false);
         $template = $this->prepareTemplate($model, 'model');
 
         $file = $this->fillTemplate($template, $model);
 
-        if ($model->indentWithSpace()) {
+        if ($model->indentWithSpace())
+        {
             $file = str_replace("\t", str_repeat(' ', $model->indentWithSpace()), $file);
         }
 
         $this->files->put($this->modelPath($model, $model->usesBaseFiles() ? ['Base'] : []), $file);
 
-        if ($this->needsUserFile($model)) {
+        if ($this->needsUserFile($model))
+        {
             $this->createUserFile($model);
         }
     }
@@ -203,21 +214,23 @@ class Factory
     /**
      * @param \Reliese\Coders\Model\Model $model
      *
+     * @return array
      * @todo: Delegate workload to SchemaManager and ModelManager
      *
-     * @return array
      */
     public function referencing(Model $model)
     {
         $references = [];
 
         // TODO: SchemaManager should do this
-        foreach ($this->schemas as $schema) {
+        foreach ($this->schemas as $schema)
+        {
             $references = array_merge($references, $schema->referencing($model->getBlueprint()));
         }
 
         // TODO: ModelManager should do this
-        foreach ($references as &$related) {
+        foreach ($references as &$related)
+        {
             $blueprint = $related['blueprint'];
             $related['model'] = $model->getBlueprint()->is($blueprint->schema(), $blueprint->table())
                 ? $model
@@ -281,15 +294,18 @@ class Factory
     private function imports($dependencies, Model $model)
     {
         $imports = [];
-        foreach ($dependencies as $dependencyClass) {
+        foreach ($dependencies as $dependencyClass)
+        {
             // Skip when the same class
-            if (trim($dependencyClass, "\\") == trim($model->getQualifiedUserClassName(), "\\")) {
+            if (trim($dependencyClass, "\\") == trim($model->getQualifiedUserClassName(), "\\"))
+            {
                 continue;
             }
 
             // Do not import classes from same namespace
             $inCurrentNamespacePattern = str_replace('\\', '\\\\', "/{$model->getBaseNamespace()}\\[a-zA-Z0-9_]*/");
-            if (preg_match($inCurrentNamespacePattern, $dependencyClass)) {
+            if (preg_match($inCurrentNamespacePattern, $dependencyClass))
+            {
                 continue;
             }
 
@@ -314,8 +330,10 @@ class Factory
         $qualifiedClassesPattern = '/([\\\\a-zA-Z0-9_]*\\\\[\\\\a-zA-Z0-9_]*)/';
         $matches = [];
         $importableDependencies = [];
-        if (preg_match_all($qualifiedClassesPattern, $placeholder, $matches)) {
-            foreach ($matches[1] as $usedClass) {
+        if (preg_match_all($qualifiedClassesPattern, $placeholder, $matches))
+        {
+            foreach ($matches[1] as $usedClass)
+            {
                 $namespacePieces = explode('\\', $usedClass);
                 $className = array_pop($namespacePieces);
 
@@ -324,7 +342,8 @@ class Factory
                  *
                  * @see https://github.com/reliese/laravel/issues/209
                  */
-                if ($model->usesBaseFiles() && $usedClass === $model->getQualifiedUserClassName()) {
+                if ($model->usesBaseFiles() && $usedClass === $model->getQualifiedUserClassName())
+                {
                     continue;
                 }
 
@@ -332,7 +351,8 @@ class Factory
                 if (
                     $className == $model->getClassName() &&
                     trim(implode('\\', $namespacePieces), '\\') != trim($model->getNamespace(), '\\')
-                ) {
+                )
+                {
                     continue;
                 }
 
@@ -354,21 +374,25 @@ class Factory
         // Process property annotations
         $annotations = '';
 
-        foreach ($model->getProperties() as $name => $hint) {
+        foreach ($model->getProperties() as $name => $hint)
+        {
             $annotations .= $this->class->annotation('property', "$hint \$$name");
         }
 
-        if ($model->hasRelations()) {
+        if ($model->hasRelations())
+        {
             // Add separation between model properties and model relations
             $annotations .= "\n * ";
         }
 
-        foreach ($model->getRelations() as $name => $relation) {
+        foreach ($model->getRelations() as $name => $relation)
+        {
             // TODO: Handle collisions, perhaps rename the relation.
-            if ($model->hasProperty($name)) {
+            if ($model->hasProperty($name))
+            {
                 continue;
             }
-            $annotations .= $this->class->annotation('property', $relation->hint()." \$$name");
+            $annotations .= $this->class->annotation('property', $relation->hint() . " \$$name");
         }
 
         return $annotations;
@@ -383,33 +407,39 @@ class Factory
     {
         $body = '';
 
-        foreach ($model->getTraits() as $trait) {
+        foreach ($model->getTraits() as $trait)
+        {
             $body .= $this->class->mixin($trait);
         }
 
         $excludedConstants = [];
 
-        if ($model->hasCustomCreatedAtField()) {
+        if ($model->hasCustomCreatedAtField())
+        {
             $body .= $this->class->constant('CREATED_AT', $model->getCreatedAtField());
             $excludedConstants[] = $model->getCreatedAtField();
         }
 
-        if ($model->hasCustomUpdatedAtField()) {
+        if ($model->hasCustomUpdatedAtField())
+        {
             $body .= $this->class->constant('UPDATED_AT', $model->getUpdatedAtField());
             $excludedConstants[] = $model->getUpdatedAtField();
         }
 
-        if ($model->hasCustomDeletedAtField()) {
+        if ($model->hasCustomDeletedAtField())
+        {
             $body .= $this->class->constant('DELETED_AT', $model->getDeletedAtField());
             $excludedConstants[] = $model->getDeletedAtField();
         }
 
-        if ($model->usesPropertyConstants()) {
+        if ($model->usesPropertyConstants())
+        {
             // Take all properties and exclude already added constants with timestamps.
             $properties = array_keys($model->getProperties());
             $properties = array_diff($properties, $excludedConstants);
 
-            foreach ($properties as $property) {
+            foreach ($properties as $property)
+            {
                 $constantName = Str::upper(Str::snake($property));
                 $body .= $this->class->constant($constantName, $property);
             }
@@ -417,69 +447,85 @@ class Factory
 
         $body = trim($body, "\n");
         // Separate constants from fields only if there are constants.
-        if (! empty($body)) {
+        if (!empty($body))
+        {
             $body .= "\n";
         }
 
         // Append connection name when required
-        if ($model->shouldShowConnection()) {
+        if ($model->shouldShowConnection())
+        {
             $body .= $this->class->field('connection', $model->getConnectionName());
         }
 
         // When table is not plural, append the table name
-        if ($model->needsTableName()) {
+        if ($model->needsTableName())
+        {
             $body .= $this->class->field('table', $model->getTableForQuery());
         }
 
-        if ($model->hasCustomPrimaryKey()) {
+        if ($model->hasCustomPrimaryKey())
+        {
             $body .= $this->class->field('primaryKey', $model->getPrimaryKey());
         }
 
-        if ($model->doesNotAutoincrement()) {
+        if ($model->doesNotAutoincrement())
+        {
             $body .= $this->class->field('incrementing', false, ['visibility' => 'public']);
         }
 
-        if ($model->hasCustomPerPage()) {
+        if ($model->hasCustomPerPage())
+        {
             $body .= $this->class->field('perPage', $model->getPerPage());
         }
 
-        if (! $model->usesTimestamps()) {
+        if (!$model->usesTimestamps())
+        {
             $body .= $this->class->field('timestamps', false, ['visibility' => 'public']);
         }
 
-        if ($model->hasCustomDateFormat()) {
+        if ($model->hasCustomDateFormat())
+        {
             $body .= $this->class->field('dateFormat', $model->getDateFormat());
         }
 
-        if ($model->doesNotUseSnakeAttributes()) {
+        if ($model->doesNotUseSnakeAttributes())
+        {
             $body .= $this->class->field('snakeAttributes', false, ['visibility' => 'public static']);
         }
 
-        if ($model->hasCasts()) {
+        if ($model->hasCasts())
+        {
             $body .= $this->class->field('casts', $model->getCasts(), ['before' => "\n"]);
         }
 
-        if ($model->hasDates()) {
+        if ($model->hasDates())
+        {
             $body .= $this->class->field('dates', $model->getDates(), ['before' => "\n"]);
         }
 
-        if ($model->hasHidden() && $model->doesNotUseBaseFiles()) {
+        if ($model->hasHidden() && $model->doesNotUseBaseFiles())
+        {
             $body .= $this->class->field('hidden', $model->getHidden(), ['before' => "\n"]);
         }
 
-        if ($model->hasFillable() && ($model->doesNotUseBaseFiles() || $model->fillableInBaseFiles())) {
+        if ($model->hasFillable() && ($model->doesNotUseBaseFiles() || $model->fillableInBaseFiles()))
+        {
             $body .= $this->class->field('fillable', $model->getFillable(), ['before' => "\n"]);
         }
 
-        if ($model->hasHints() && $model->usesHints()) {
+        if ($model->hasHints() && $model->usesHints())
+        {
             $body .= $this->class->field('hints', $model->getHints(), ['before' => "\n"]);
         }
 
-        foreach ($model->getMutations() as $mutation) {
+        foreach ($model->getMutations() as $mutation)
+        {
             $body .= $this->class->method($mutation->name(), $mutation->body(), ['before' => "\n"]);
         }
 
-        foreach ($model->getRelations() as $constraint) {
+        foreach ($model->getRelations() as $constraint)
+        {
             $body .= $this->class->method($constraint->name(), $constraint->body(), ['before' => "\n"]);
         }
 
@@ -499,11 +545,12 @@ class Factory
     {
         $modelsDirectory = $this->path(array_merge([$this->config($model->getBlueprint(), 'path')], $custom));
 
-        if (! $this->files->isDirectory($modelsDirectory)) {
+        if (!$this->files->isDirectory($modelsDirectory))
+        {
             $this->files->makeDirectory($modelsDirectory, 0755, true);
         }
 
-        return $this->path([$modelsDirectory, $model->getClassName().'.php']);
+        return $this->path([$modelsDirectory, $model->getClassName() . '.php']);
     }
 
     /**
@@ -513,7 +560,7 @@ class Factory
      */
     protected function path($pieces)
     {
-        return implode(DIRECTORY_SEPARATOR, (array) $pieces);
+        return implode(DIRECTORY_SEPARATOR, (array)$pieces);
     }
 
     /**
@@ -523,7 +570,7 @@ class Factory
      */
     public function needsUserFile(Model $model)
     {
-        return ! $this->files->exists($this->modelPath($model)) && $model->usesBaseFiles();
+        return !$this->files->exists($this->modelPath($model)) && $model->usesBaseFiles();
     }
 
     /**
@@ -560,7 +607,7 @@ class Factory
      */
     private function getBaseClassName(Model $model)
     {
-        return 'Base'.$model->getClassName();
+        return 'Base' . $model->getClassName();
     }
 
     /**
@@ -572,11 +619,13 @@ class Factory
     {
         $body = '';
 
-        if ($model->hasHidden()) {
+        if ($model->hasHidden())
+        {
             $body .= $this->class->field('hidden', $model->getHidden());
         }
 
-        if ($model->hasFillable() && !$model->fillableInBaseFiles()) {
+        if ($model->hasFillable() && !$model->fillableInBaseFiles())
+        {
             $body .= $this->class->field('fillable', $model->getFillable(), ['before' => "\n"]);
         }
 
@@ -595,7 +644,8 @@ class Factory
      */
     public function config(Blueprint $blueprint = null, $key = null, $default = null)
     {
-        if (is_null($blueprint)) {
+        if (is_null($blueprint))
+        {
             return $this->config;
         }
 

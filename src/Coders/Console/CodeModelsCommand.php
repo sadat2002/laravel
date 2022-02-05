@@ -59,13 +59,13 @@ class CodeModelsCommand extends Command
         $table = $this->getTable();
 
         // Check whether we just need to generate one table
-        if ($table) {
-            $this->models->on($connection)->create($schema, $table);
+        if ($table)
+        {
+            $this->models->on($connection, $schema)->create($schema, $table);
             $this->info("Check out your models for $table");
-        }
-
-        // Otherwise map the whole database
-        else {
+        } // Otherwise map the whole database
+        else
+        {
             $this->models->on($connection)->map($schema);
             $this->info("Check out your models for $schema");
         }

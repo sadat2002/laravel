@@ -24,9 +24,9 @@ class SchemaManager implements IteratorAggregate
      * @var array
      */
     protected static $lookup = [
-        MySqlConnection::class => MySqlSchema::class,
-        SQLiteConnection::class => SqliteSchema::class,
-        PostgresConnection::class => PostgresSchema::class,
+        MySqlConnection::class                                       => MySqlSchema::class,
+        SQLiteConnection::class                                      => SqliteSchema::class,
+        PostgresConnection::class                                    => PostgresSchema::class,
         \Larapack\DoctrineSupport\Connections\MySqlConnection::class => MySqlSchema::class,
     ];
 
@@ -39,15 +39,17 @@ class SchemaManager implements IteratorAggregate
      * @var \Reliese\Meta\Schema[]
      */
     protected $schemas = [];
+    protected $schema = [];
 
     /**
      * SchemaManager constructor.
      *
      * @param \Illuminate\Database\ConnectionInterface $connection
      */
-    public function __construct(ConnectionInterface $connection)
+    public function __construct(ConnectionInterface $connection, $schema = null)
     {
         $this->connection = $connection;
+        $this->schema = $schema;
 
         $this->boot();
     }
@@ -57,14 +59,19 @@ class SchemaManager implements IteratorAggregate
      */
     public function boot()
     {
-        if (! $this->hasMapping()) {
+        if (!$this->hasMapping())
+        {
             throw new RuntimeException("There is no Schema Mapper registered for [{$this->type()}] connection.");
         }
 
         $schemas = forward_static_call([$this->getMapper(), 'schemas'], $this->connection);
 
-        foreach ($schemas as $schema) {
-            $this->make($schema);
+        foreach ($schemas as $schema)
+        {
+            if ($this->schema == $schema)
+            {
+                $this->make($schema);
+            }
         }
     }
 
@@ -75,7 +82,8 @@ class SchemaManager implements IteratorAggregate
      */
     public function make($schema)
     {
-        if (array_key_exists($schema, $this->schemas)) {
+        if (array_key_exists($schema, $this->schemas))
+        {
             return $this->schemas[$schema];
         }
 
