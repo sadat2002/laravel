@@ -173,7 +173,7 @@ class Factory
         $model = $this->makeModel($schema, $table, false);
         $template = $this->prepareTemplate($model, 'model');
 
-        $file = $this->fillTemplate($template, $model);
+        $file = $this->fillTemplate($template, $model, $database_id);
 
         if ($model->indentWithSpace())
         {
@@ -261,9 +261,10 @@ class Factory
      *
      * @return mixed
      */
-    protected function fillTemplate($template, Model $model)
+    protected function fillTemplate($template, Model $model, $database_id)
     {
-        $template = str_replace('{{namespace}}', $model->getBaseNamespace(), $template);
+        $namespace = $model->getBaseNamespace() . '\\database_' . $database_id;
+        $template = str_replace('{{namespace}}', $namespace, $template);
         $template = str_replace('{{class}}', $model->getClassName(), $template);
 
         $properties = $this->properties($model);
