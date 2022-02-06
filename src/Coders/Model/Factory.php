@@ -168,7 +168,7 @@ class Factory
      * @param string $schema
      * @param string $table
      */
-    public function create($schema, $table)
+    public function create($schema, $table, $database_id)
     {
         $model = $this->makeModel($schema, $table, false);
         $template = $this->prepareTemplate($model, 'model');
@@ -180,7 +180,7 @@ class Factory
             $file = str_replace("\t", str_repeat(' ', $model->indentWithSpace()), $file);
         }
 
-        $this->files->put($this->modelPath($model, $model->usesBaseFiles() ? ['Base'] : []), $file);
+        $this->files->put($this->modelPath($model, $model->usesBaseFiles() ? ['Base'] : ['database_' . $database_id]), $file);
 
         if ($this->needsUserFile($model))
         {
